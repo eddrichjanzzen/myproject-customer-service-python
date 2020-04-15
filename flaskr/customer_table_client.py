@@ -97,55 +97,47 @@ def create_customer(customer_dict):
 	updatedDate = "1900-01-01T00:00:00.000000"
 	profilePhotoUrl = str(customer_dict['profilePhotoUrl'])
 
-	# check if is_unique
-	unique = is_unique(customerId, email, userName, custNumber, cardNumber)
-		
-	if len(unique) == 0:
+	dynamodb = get_db_resource()
+	table = dynamodb.Table(table_name)
+	response = table.put_item(
+		TableName=table_name,
+		Item={
+				'customerId': customerId,
+				'firstName':  firstName,
+				'lastName': lastName,
+				'email' : email,
+				'userName' : userName,
+				'birthDate': birthDate,
+				'gender': gender,
+				'custNumber': custNumber,
+				'cardNumber': cardNumber,
+				'custAccountNo': custAccountNo,
+				'phoneNumber': phoneNumber,
+				'createdDate': createdDate,
+				'updatedDate': updatedDate,
+				'profilePhotoUrl': profilePhotoUrl
+			}
+		)
+	# logger.info("Logger Response: ")
+	# logger.info(response)
+	customer = {
+		'customerId': customerId,
+		'firstName': firstName,
+		'lastName': lastName,
+		'email': email,
+		'userName': userName,
+		'birthDate': birthDate,
+		'gender': gender,
+		'custNumber': custNumber,
+		'cardNumber': cardNumber,
+		'custAccountNo': custAccountNo,			
+		'phoneNumber': phoneNumber,
+		'createdDate': createdDate,
+		'updatedDate': updatedDate,
+		'profilePhotoUrl': profilePhotoUrl,
+	}
+	return json.dumps({'customer': customer})
 
-		dynamodb = get_db_resource()
-		table = dynamodb.Table(table_name)
-		response = table.put_item(
-			TableName=table_name,
-			Item={
-					'customerId': customerId,
-					'firstName':  firstName,
-					'lastName': lastName,
-					'email' : email,
-					'userName' : userName,
-					'birthDate': birthDate,
-					'gender': gender,
-					'custNumber': custNumber,
-					'cardNumber': cardNumber,
-					'custAccountNo': custAccountNo,
-					'phoneNumber': phoneNumber,
-					'createdDate': createdDate,
-					'updatedDate': updatedDate,
-					'profilePhotoUrl': profilePhotoUrl
-				}
-			)
-		# logger.info("Logger Response: ")
-		# logger.info(response)
-		customer = {
-			'customerId': customerId,
-			'firstName': firstName,
-			'lastName': lastName,
-			'email': email,
-			'userName': userName,
-			'birthDate': birthDate,
-			'gender': gender,
-			'custNumber': custNumber,
-			'cardNumber': cardNumber,
-			'custAccountNo': custAccountNo,			
-			'phoneNumber': phoneNumber,
-			'createdDate': createdDate,
-			'updatedDate': updatedDate,
-			'profilePhotoUrl': profilePhotoUrl,
-		}
-		return json.dumps({'customer': customer})
-
-	else: 
-
-		return json.dumps({'customer': 'The following values already exist in the database {}'.format(unique)})
 
 
 def update_customer(customerId, customer_dict):
@@ -252,49 +244,15 @@ def is_unique(customerId, email, userName, custNumber, cardNumber):
 		ConsistentRead=True,
 	)
 
-
-	duplicate_fields = []
-
-	if len(response['Items']) == 0: 
-
-		return duplicate_fields
-	
-	else: 
-
-		if response['Items'][0]['customerId'] == customerId:
-
-			duplicate_fields.append('customerId : {}'.format(customerId))
-
-		if response['Items'][0]['email'] == email:
-
-			duplicate_fields.append('email : {}'.format(email))
-
-		if response['Items'][0]['userName'] == userName:
-
-			duplicate_fields.append('userName : {}'.format(userName))
-
-		if response['Items'][0]['custNumber'] == custNumber:
-
-			duplicate_fields.append('custNumber : {}'.format(custNumber))
-
-		if response['Items'][0]['cardNumber'] == cardNumber:
-
-			duplicate_fields.append('cardNumber : {}'.format(cardNumber))
-
-	return duplicate_fields
-
+	return len(response['Items']) == 0 
 
 
 def get_max_value(attribute):
-
 	"""Will scan the table for the maximum possible value given an attribute"""
-
-	dynamodb = get_db_client()
-
 	maximum = None
-
-	response = dynamodb.scan(
-		TableName=table_name,
+	dynamodb = get_db_resource()
+	table = dynamodb.Table(table_name)
+	response = table.scan(
 		Select='SPECIFIC_ATTRIBUTES',
 	 	AttributesToGet=[
 	 		attribute
@@ -305,9 +263,7 @@ def get_max_value(attribute):
 	if response['Items'] == []: 
 		pass
 	else: 
-
 		maximum = max([int(m[attribute]) for m in response['Items']])
-
 	return maximum
 
 
