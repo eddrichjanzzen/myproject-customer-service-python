@@ -91,10 +91,8 @@ def delete_customer(customerId):
 def bad_request(e):
     logger.error(e)
     # note that we set the 400 status explicitly
-    errorResponse = json.dumps({'customer': {
-        'data': {},
-        'status': 'Bad request'
-        }})
+    errorResponse = json.dumps({'error': 'Bad request'})
     resp = Response(errorResponse, 400)
     resp.headers["Content-Type"] = "application/json"
     return resp
+
