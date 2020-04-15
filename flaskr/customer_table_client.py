@@ -30,6 +30,8 @@ def get_all_customers():
 	# logger.info("Logger Response: ")
 	# logger.info(response)    
 	customer_list = defaultdict(list)
+
+
 	for item in response["Items"]:
 		customer = {
 			'customerId': item['customerId'],
@@ -60,6 +62,9 @@ def get_customer(customerId):
 	)
 	# logger.info("Logger Response: ")
 	# logger.info(response)
+	if 'Item' not in response:
+		return json.dumps({'error': 'Customer does not exist'})
+
 	item = response['Item']
 
 	customer = {
@@ -97,47 +102,59 @@ def create_customer(customer_dict):
 	updatedDate = "1900-01-01T00:00:00.000000"
 	profilePhotoUrl = str(customer_dict['profilePhotoUrl'])
 
-	dynamodb = get_db_resource()
-	table = dynamodb.Table(table_name)
-	response = table.put_item(
-		TableName=table_name,
-		Item={
-				'customerId': customerId,
-				'firstName':  firstName,
-				'lastName': lastName,
-				'email' : email,
-				'userName' : userName,
-				'birthDate': birthDate,
-				'gender': gender,
-				'custNumber': custNumber,
-				'cardNumber': cardNumber,
-				'custAccountNo': custAccountNo,
-				'phoneNumber': phoneNumber,
-				'createdDate': createdDate,
-				'updatedDate': updatedDate,
-				'profilePhotoUrl': profilePhotoUrl
-			}
-		)
-	# logger.info("Logger Response: ")
-	# logger.info(response)
-	customer = {
-		'customerId': customerId,
-		'firstName': firstName,
-		'lastName': lastName,
-		'email': email,
-		'userName': userName,
-		'birthDate': birthDate,
-		'gender': gender,
-		'custNumber': custNumber,
-		'cardNumber': cardNumber,
-		'custAccountNo': custAccountNo,			
-		'phoneNumber': phoneNumber,
-		'createdDate': createdDate,
-		'updatedDate': updatedDate,
-		'profilePhotoUrl': profilePhotoUrl,
-	}
-	return json.dumps({'customer': customer})
 
+	unique = is_unique(customerId, 
+										email, 
+										userName, 
+										custNumber, 
+										cardNumber)
+
+	if unique:
+
+		dynamodb = get_db_resource()
+		table = dynamodb.Table(table_name)
+		response = table.put_item(
+			TableName=table_name,
+			Item={
+					'customerId': customerId,
+					'firstName':  firstName,
+					'lastName': lastName,
+					'email' : email,
+					'userName' : userName,
+					'birthDate': birthDate,
+					'gender': gender,
+					'custNumber': custNumber,
+					'cardNumber': cardNumber,
+					'custAccountNo': custAccountNo,
+					'phoneNumber': phoneNumber,
+					'createdDate': createdDate,
+					'updatedDate': updatedDate,
+					'profilePhotoUrl': profilePhotoUrl
+				}
+			)
+		# logger.info("Logger Response: ")
+		# logger.info(response)
+		customer = {
+			'customerId': customerId,
+			'firstName': firstName,
+			'lastName': lastName,
+			'email': email,
+			'userName': userName,
+			'birthDate': birthDate,
+			'gender': gender,
+			'custNumber': custNumber,
+			'cardNumber': cardNumber,
+			'custAccountNo': custAccountNo,			
+			'phoneNumber': phoneNumber,
+			'createdDate': createdDate,
+			'updatedDate': updatedDate,
+			'profilePhotoUrl': profilePhotoUrl,
+		}
+		return json.dumps({'customer': customer})
+
+	else: 
+
+		return json.dumps({'error': 'Customer already exists.'})
 
 
 def update_customer(customerId, customer_dict):
@@ -187,6 +204,9 @@ def update_customer(customerId, customer_dict):
 	logger.info("Logger Response: ")
 	logger.info(response)
 
+	if 'Item' not in response:
+		return json.dumps({'error': 'Customer does not exist'})
+
 	updated = response['Attributes']
 	customer = {
 		'customerId': updated['customerId'],
@@ -215,8 +235,13 @@ def delete_customer(customerId):
 			'customerId': customerId
 		}
 	)
+
 	logger.info("Logger Response: ")
 	logger.info(response)
+
+	if 'Item' not in response:
+		return json.dumps({'error': 'Customer does not exist'})
+
 	customer = {
 		'customerId' : customerId,
 	}
