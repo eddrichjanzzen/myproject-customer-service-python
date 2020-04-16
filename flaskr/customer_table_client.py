@@ -9,6 +9,7 @@ import datetime
 from datetime import date
 
 from boto3.dynamodb.conditions import Key, Attr
+
 if __package__ is None or __package__ == '':
 	# uses current directory visibility
 	from custom_logger import setup_logger
@@ -58,12 +59,14 @@ def get_customer(customerId):
 	response = table.get_item(
 		Key={
 			'customerId': customerId
-		}
+		},
+		ConsistentRead=True
 	)
-	# logger.info("Logger Response: ")
-	# logger.info(response)
+	logger.info("Logger Response: ")
+	logger.info(response)
+
 	if 'Item' not in response:
-		return json.dumps({'error': 'Customer does not exist'})
+		raise Exception("CustomerNotFound")
 
 	item = response['Item']
 
@@ -154,7 +157,7 @@ def create_customer(customer_dict):
 
 	else: 
 
-		return json.dumps({'error': 'Customer already exists.'})
+		raise Exception('CustomerExists')
 
 
 def update_customer(customerId, customer_dict):
@@ -172,40 +175,45 @@ def update_customer(customerId, customer_dict):
 
 	dynamodb = get_db_resource()
 	table = dynamodb.Table(table_name)
-	response = table.update_item(
-		Key={
-			'customerId': customerId
-		},
-		UpdateExpression="""SET firstName = :p_firstName,
-								lastName = :p_lastName,
-								email = :p_email,
-								userName = :p_userName,
-								birthDate = :p_birthDate,
-								gender = :p_gender,
-								custAccountNo = :p_custAccountNo,								
-								phoneNumber = :p_phoneNumber,
-								updatedDate = :p_updatedDate,
-								profilePhotoUrl = :p_profilePhotoUrl
-								""",
-		ExpressionAttributeValues={
-			':p_firstName': firstName,
-			':p_lastName' : lastName,
-			':p_email':  email,
-			':p_userName': userName,
-			':p_birthDate': birthDate,
-			':p_gender':  gender,
-			':p_custAccountNo':  custAccountNo,			
-			':p_phoneNumber': phoneNumber,
-			':p_updatedDate':  updatedDate,
-			':p_profilePhotoUrl':  profilePhotoUrl
-		},
-		ReturnValues="ALL_NEW"
-	)
-	# logger.info("Logger Response: ")
-	# logger.info(response)
+	
+	try:
+		response = table.update_item(
+			Key={
+				'customerId': customerId
+			},
+			UpdateExpression="""SET firstName = :p_firstName,
+									lastName = :p_lastName,
+									email = :p_email,
+									userName = :p_userName,
+									birthDate = :p_birthDate,
+									gender = :p_gender,
+									custAccountNo = :p_custAccountNo,								
+									phoneNumber = :p_phoneNumber,
+									updatedDate = :p_updatedDate,
+									profilePhotoUrl = :p_profilePhotoUrl
+									""",
+			ConditionExpression="customerId = :p_customerId",
+			ExpressionAttributeValues={
+				':p_firstName': firstName,
+				':p_lastName' : lastName,
+				':p_email':  email,
+				':p_userName': userName,
+				':p_birthDate': birthDate,
+				':p_gender':  gender,
+				':p_custAccountNo':  custAccountNo,			
+				':p_phoneNumber': phoneNumber,
+				':p_updatedDate':  updatedDate,
+				':p_profilePhotoUrl':  profilePhotoUrl,
+				':p_customerId' : customerId
+			},
+			ReturnValues="ALL_NEW"
+		)
 
-	if 'Attributes' not in response:
-		return json.dumps({'error': 'Customer does not exist'})
+	except Exception as e:
+		raise Exception("CustomerNotFound")
+
+	logger.info("Logger Response: ")
+	logger.info(response)
 
 	updated = response['Attributes']
 	customer = {
@@ -239,8 +247,8 @@ def delete_customer(customerId):
 	logger.info("Logger Response: ")
 	logger.info(response)
 
-	if 'Item' not in response:
-		return json.dumps({'error': 'Customer does not exist'})
+	if 'ConsumedCapacity' in response:
+		raise Exception("CustomerNotFound")
 
 	customer = {
 		'customerId' : customerId,
