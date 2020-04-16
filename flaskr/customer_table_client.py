@@ -27,8 +27,8 @@ def get_all_customers():
 	response = table.scan(
 			Select='ALL_ATTRIBUTES'
 	)
-	# logger.info("Logger Response: ")
-	# logger.info(response)    
+	logger.info("Logger Response: ")
+	logger.info(response)    
 	customer_list = defaultdict(list)
 
 
@@ -201,10 +201,10 @@ def update_customer(customerId, customer_dict):
 		},
 		ReturnValues="ALL_NEW"
 	)
-	logger.info("Logger Response: ")
-	logger.info(response)
+	# logger.info("Logger Response: ")
+	# logger.info(response)
 
-	if 'Item' not in response:
+	if 'Attributes' not in response:
 		return json.dumps({'error': 'Customer does not exist'})
 
 	updated = response['Attributes']
