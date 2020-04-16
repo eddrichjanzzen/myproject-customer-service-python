@@ -44,7 +44,11 @@ def get_customer(customerId):
         service_response = customer_table_client.get_customer(customerId)
     except Exception as e:
         logger.error(e)
-        abort(400)
+        if 'CustomerNotFound' in e.args:
+            abort(404)
+        else:
+            abort(400)
+
     resp = Response(service_response)
     resp.headers["Content-Type"] = "application/json"
     return resp
@@ -57,7 +61,10 @@ def create_customer():
         service_response = customer_table_client.create_customer(customer_dict)
     except Exception as e:
         logger.error(e)
-        abort(400)        
+        if 'CustomerExists' in e.args:
+            abort(405)
+        else:
+            abort(400)        
     resp = Response(service_response, 201)
     resp.headers["Content-Type"] = "application/json"
     return resp
@@ -69,8 +76,10 @@ def update_customer(customerId):
         customer_dict = json.loads(request.data)
         service_response = customer_table_client.update_customer(customerId, customer_dict)
     except Exception as e:
-        logger.error(e)
-        abort(400)
+        if 'CustomerNotFound' in e.args:
+            abort(404)
+        else:
+            abort(400)
     resp = Response(service_response, 200)
     resp.headers["Content-Type"] = "application/json"
     return resp
@@ -81,8 +90,10 @@ def delete_customer(customerId):
     try:
         service_response = customer_table_client.delete_customer(customerId)
     except Exception as e:
-        logger.error(e)
-        abort(400)
+        if 'CustomerNotFound' in e.args:
+            abort(404)
+        else:
+            abort(400)
     resp = Response(service_response, 200)
     resp.headers["Content-Type"] = "application/json"
     return resp
@@ -95,4 +106,24 @@ def bad_request(e):
     resp = Response(errorResponse, 400)
     resp.headers["Content-Type"] = "application/json"
     return resp
+
+@customer_module.errorhandler(404)
+def customer_not_found(e):
+    logger.error(e)
+    # note that we set the 400 status explicitly
+    errorResponse = json.dumps({'error': 'Customer does not exist'})
+    resp = Response(errorResponse, 404)
+    resp.headers["Content-Type"] = "application/json"
+    return resp
+
+
+@customer_module.errorhandler(405)
+def customer_already_exists(e):
+    logger.error(e)
+    # note that we set the 400 status explicitly
+    errorResponse = json.dumps({'error': 'Customer already exists.'})
+    resp = Response(errorResponse, 405)
+    resp.headers["Content-Type"] = "application/json"
+    return resp
+
 
