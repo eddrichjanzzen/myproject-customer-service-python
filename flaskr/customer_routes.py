@@ -1,4 +1,3 @@
-
 import uuid
 from flask import Blueprint
 from flask import Flask, json, Response, request, abort
@@ -101,7 +100,6 @@ def delete_customer(customerId):
 @customer_module.errorhandler(400)
 def bad_request(e):
     logger.error(e)
-    # note that we set the 400 status explicitly
     errorResponse = json.dumps({'error': 'Bad request'})
     resp = Response(errorResponse, 400)
     resp.headers["Content-Type"] = "application/json"
@@ -110,20 +108,16 @@ def bad_request(e):
 @customer_module.errorhandler(404)
 def customer_not_found(e):
     logger.error(e)
-    # note that we set the 400 status explicitly
     errorResponse = json.dumps({'error': 'Customer does not exist'})
     resp = Response(errorResponse, 404)
     resp.headers["Content-Type"] = "application/json"
     return resp
 
-
 @customer_module.errorhandler(405)
 def customer_already_exists(e):
     logger.error(e)
-    # note that we set the 400 status explicitly
     errorResponse = json.dumps({'error': 'Customer already exists.'})
     resp = Response(errorResponse, 405)
     resp.headers["Content-Type"] = "application/json"
     return resp
-
 

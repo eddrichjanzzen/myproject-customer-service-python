@@ -32,7 +32,6 @@ def get_all_customers():
 	logger.info(response)    
 	customer_list = defaultdict(list)
 
-
 	for item in response["Items"]:
 		customer = {
 			'customerId': item['customerId'],
@@ -62,8 +61,9 @@ def get_customer(customerId):
 		},
 		ConsistentRead=True
 	)
-	logger.info("Logger Response: ")
-	logger.info(response)
+
+	# logger.info("Logger Response: ")
+	# logger.info(response)
 
 	if 'Item' not in response:
 		raise Exception("CustomerNotFound")
@@ -89,8 +89,7 @@ def get_customer(customerId):
 	return json.dumps({'customer': customer})
 
 def create_customer(customer_dict):
-	
-	customerId = str(uuid.uuid4())
+	customerId = str(customer_dict['userName']) # str(uuid.uuid4())
 	firstName = str(customer_dict['firstName'])
 	lastName = str(customer_dict['lastName'])
 	email = str(customer_dict['email'])
@@ -105,12 +104,7 @@ def create_customer(customer_dict):
 	updatedDate = "1900-01-01T00:00:00.000000"
 	profilePhotoUrl = str(customer_dict['profilePhotoUrl'])
 
-
-	unique = is_unique(customerId, 
-										email, 
-										userName, 
-										custNumber, 
-										cardNumber)
+	unique = is_unique(customerId, email, userName, custNumber, cardNumber)
 
 	if unique:
 
@@ -122,8 +116,8 @@ def create_customer(customer_dict):
 					'customerId': customerId,
 					'firstName':  firstName,
 					'lastName': lastName,
-					'email' : email,
-					'userName' : userName,
+					'email': email,
+					'userName': userName,
 					'birthDate': birthDate,
 					'gender': gender,
 					'custNumber': custNumber,
@@ -154,14 +148,10 @@ def create_customer(customer_dict):
 			'profilePhotoUrl': profilePhotoUrl,
 		}
 		return json.dumps({'customer': customer})
-
 	else: 
-
 		raise Exception('CustomerExists')
 
-
 def update_customer(customerId, customer_dict):
-
 	firstName = str(customer_dict['firstName'])
 	lastName = str(customer_dict['lastName'])
 	email = str(customer_dict['email'])
@@ -187,7 +177,7 @@ def update_customer(customerId, customer_dict):
 									userName = :p_userName,
 									birthDate = :p_birthDate,
 									gender = :p_gender,
-									custAccountNo = :p_custAccountNo,								
+									custAccountNo = :p_custAccountNo,
 									phoneNumber = :p_phoneNumber,
 									updatedDate = :p_updatedDate,
 									profilePhotoUrl = :p_profilePhotoUrl
@@ -200,7 +190,7 @@ def update_customer(customerId, customer_dict):
 				':p_userName': userName,
 				':p_birthDate': birthDate,
 				':p_gender':  gender,
-				':p_custAccountNo':  custAccountNo,			
+				':p_custAccountNo':  custAccountNo,
 				':p_phoneNumber': phoneNumber,
 				':p_updatedDate':  updatedDate,
 				':p_profilePhotoUrl':  profilePhotoUrl,
@@ -255,7 +245,6 @@ def delete_customer(customerId):
 	}
 	return json.dumps({'customer': customer})
 
-
 def is_unique(customerId, email, userName, custNumber, cardNumber):
 	"""
 	Checks if email, userName, custNumber, cardNumber are unique
@@ -276,7 +265,6 @@ def is_unique(customerId, email, userName, custNumber, cardNumber):
 		FilterExpression=filter_expression,
 		ConsistentRead=True,
 	)
-
 	return len(response['Items']) == 0 
 
 
@@ -299,10 +287,8 @@ def get_max_value(attribute):
 		maximum = max([int(m[attribute]) for m in response['Items']])
 	return maximum
 
-
 def customer_number_generator():
 	now = datetime.datetime.now()
-
 	max_value = get_max_value('custNumber')
 
 	if max_value: 
@@ -311,27 +297,22 @@ def customer_number_generator():
 		last_digits = str(max_value)[-2:]
 		logger.info("last digits")
 		logger.info(last_digits)
+
 		new_customer_number = '099996' + str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) + str(int(last_digits) + 1).zfill(2)
-
 	else: 
-
 		new_customer_number = '099996' + str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) + '01'
 
 	return new_customer_number
 
 def card_number_generator():
 	now = datetime.datetime.now()
-
 	max_value = get_max_value('cardNumber')
 
 	if max_value: 
 		# get last 5 digits
 		last_digits = str(max_value)[-5:]
-			
 		new_card_number = '623633' + str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) + str(int(last_digits) + 1).zfill(5)
-
 	else: 
-
 		new_card_number = '623633' + str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) + '00001'
 
 	return new_card_number
