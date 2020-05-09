@@ -200,6 +200,12 @@ $ aws ecr describe-images --repository-name myproject-customer-service
 
 ## Run and Test Locally (docker-compose)
 
+#### Prerequisites
+Make sure `FLASK_ENV` in  `flaskr/.flaskenv ` file is set to development:
+```
+FLASK_ENV=development
+```
+
 #### Step 1: Build and run application locally with docker compose
 To test the application locally, you must first build the program. To do this, first make sure your docker daemon is running. Once running, you can build the application by issuing the ff command: 
 ```
